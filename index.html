@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>A Little Love Story ❤️</title>
+<style>
+body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #ffb6c1, #ff7eb3); color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; touch-action: manipulation; position: relative; }
+#bgHeartsContainer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+.card { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px; max-width: 560px; width: 92%; text-align: center; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); animation: fadeIn 1.2s ease; position: relative; overflow: visible; z-index: 1; }
+h1 { font-size: 2.2rem; margin-bottom: 12px; text-shadow: 0 0 8px #fff, 0 0 16px #ff69b4; }
+p { font-size: 1.1rem; line-height: 1.6; }
+button { margin-top: 18px; padding: 14px 32px; font-size: 1.05rem; border: none; border-radius: 30px; background: #ff4b5c; color: #fff; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(0,0,0,0.3); }
+.screen { display: none; }
+.screen.active { display: block; }
+.game-area { position: relative; height: 360px; margin-top: 12px; border-radius: 16px; background: linear-gradient(to bottom, #ffc0cb, #ffb6c1); overflow: hidden; z-index: 1; }
+.instruction { background: rgba(255,255,255,0.18); border-radius: 14px; padding: 16px; margin-bottom: 10px; font-size: 1.05rem; z-index: 1; }
+.hud { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 1.1rem; z-index: 1; }
+.falling-heart { position: absolute; top: -50px; font-size: 2.4rem; cursor: pointer; user-select: none; animation: fall linear forwards; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.25)); z-index: 2; }
+.gold { filter: drop-shadow(0 0 12px gold); }
+.miss { animation: missFade 0.8s forwards; pointer-events: none; }
+.continue-btn, .close-btn { margin: 8px; padding: 10px 20px; border-radius: 30px; background: #ff4b5c; color: #fff; cursor: pointer; position: relative; z-index: 1; }
+.confetti { display: none; }
+.bg-heart { position: absolute; color: #ffd6e0; user-select: none; font-size: 15px; opacity: 0.7; animation: bgFall linear forwards; }
+@keyframes bgFall { 0% { transform: translateY(0) translateX(0) rotate(0deg); } 50% { transform: translateY(50vh) translateX(var(--drift)) rotate(180deg); } 100% { transform: translateY(100vh) translateX(calc(var(--drift) * -1)) rotate(360deg); } }
+@keyframes fall { from { transform: translateY(0); } to { transform: translateY(430px); } }
+@keyframes missFade { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.6); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-6px); } 100% { transform: translateX(0); } }
+/* Tiny floating hearts for password input */
+.float-heart { position: absolute; font-size: 14px; animation: floatUp 1s linear forwards; pointer-events: none; z-index: 5; }
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-40px) scale(1.2); } }
+</style>
+</head>
+<body>
+<div id="bgHeartsContainer"></div>
+<div class="card">
+
+<!-- PASSWORD SCREEN -->
+<div class="screen active" id="passwordScreen">
+  <h1>💌 Secret Love Page 💌</h1>
+  <p>Only someone special can enter… 💖<br>Hint: It’s my heart’s favorite name 🌸</p>
+  <input type="password" id="lovePassword" placeholder="Enter the secret 💕" style="padding:12px 16px; font-size:1rem; border-radius:20px; border:none; margin-top:12px; outline:none;">
+  <br>
+  <button id="passwordBtn">Enter ▶</button>
+  <p id="passwordMsg" style="color:#fff; margin-top:10px;"></p>
+</div>
+
+<!-- ORIGINAL SCREENS -->
+<div class="screen" id="intro">
+<h1>A Little Story ❤️</h1>
+<p>Once upon a time, there was an angel named Lihini 🌸<br>Her baby named Desandu cared about her so much that he created this small game, just to make her smile and remind her how special she is.</p>
+<button onclick="goTo('instruction')">Continue ▶</button>
+</div>
+<div class="screen" id="instruction">
+<h1>How to Play 💕</h1>
+<div class="instruction">❤️ Tap falling hearts to collect love<br>✨ Golden hearts give bonus points<br>⏱️ You have 20 seconds<br>🎯 Collect 15 hearts to win</div>
+<button onclick="startGame()">Start Game ▶</button>
+</div>
+<div class="screen" id="game">
+<h1>Love Rain 💖</h1>
+<div class="game-area" id="gameArea"></div>
+<div class="hud">
+<div>Hearts: <b><span id="score">0</span></b></div>
+<div>Time: <b><span id="time">20</span>s</b></div>
+</div>
+<button class="close-btn" id="closeBtn">Close</button>
+</div>
+<div class="screen" id="lose">
+<h1>Almost… 💔</h1>
+<p>You ran out of time… try again 💕</p>
+<button class="continue-btn" onclick="restartGame()">Retry</button>
+<button class="close-btn" id="loseCloseBtn">Close</button>
+</div>
+<div class="screen" id="winMessage">
+<h1>You Won! 🎉💖</h1>
+<p>All hearts collected! Your love letter awaits 💌</p>
+<button class="continue-btn" onclick="goTo('letter')">Continue to Love Letter</button>
+</div>
+<div class="screen" id="letter">
+<h1>My Love Letter 💌</h1>
+<p>Manika ❤️<br>Every heart you caught — and even the ones you missed — remind me how lucky I am to have you in my life.<br><br>This game ends here, but my love for you doesn’t have an end 💕<br>Forever yours,<br><b>Desandu</b></p>
+<button class="continue-btn" onclick="goTo('finish')">Finish</button>
+</div>
+<div class="screen" id="finish">
+<h1>Thank You for Playing!</h1>
+<p>Hope this little adventure made you smile 😊<br>All my love is with you babe 💖💌</p>
+</div>
+
+<!-- SOUNDS -->
+<audio id="tapSound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-ball-tap-2073.mp3"></audio>
+<audio id="goldSound" src="https://assets.mixkit.co/sfx/preview/mixkit-magical-coin-win-1936.mp3"></audio>
+<audio id="bgMusic" src="https://assets.mixkit.co/music/preview/mixkit-romantic-piano-109.mp3" loop></audio>
+<audio id="typingSound" src="https://assets.mixkit.co/sfx/preview/mixkit-player-typewriter-keys-2072.mp3"></audio>
+
+<script>
+const TARGET=15;
+let score=0,timeLeft=20,rainInterval,timerInterval,bgHeartInterval;
+const gameArea=document.getElementById('gameArea');
+const bgContainer=document.getElementById('bgHeartsContainer');
+const tapSound = document.getElementById('tapSound');
+const goldSound = document.getElementById('goldSound');
+const bgMusic = document.getElementById('bgMusic');
+const typingSound = document.getElementById('typingSound');
+
+function goTo(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function startGame(){score=0;timeLeft=20;document.getElementById('score').innerText=score;document.getElementById('time').innerText=timeLeft;goTo('game');bgMusic.play();startRain();startTimer();}
+function restartGame(){startGame();}
+function startRain(){rainInterval=setInterval(()=>{
+const heart=document.createElement('div');
+const isGold=Math.random()<0.15;
+heart.className='falling-heart'+(isGold?' gold':'');
+heart.innerText=isGold?'💛':'❤️';
+heart.style.left=Math.random()*(gameArea.clientWidth-40)+'px';
+heart.style.animationDuration=(2+Math.random()*2)+'s';
+heart.addEventListener('pointerdown',()=>{
+score+=isGold?3:1;document.getElementById('score').innerText=score;(isGold?goldSound:tapSound).play();heart.remove();if(score>=TARGET)endGame(true);
+});
+gameArea.appendChild(heart);
+setTimeout(()=>{if(gameArea.contains(heart)){heart.classList.add('miss');setTimeout(()=>heart.remove(),800);}},4200);
+},450);}
+function startTimer(){document.getElementById('time').innerText=timeLeft;timerInterval=setInterval(()=>{timeLeft--;document.getElementById('time').innerText=timeLeft;if(timeLeft<=0)endGame(false);},1000);}
+function endGame(win){clearInterval(rainInterval);clearInterval(timerInterval);bgMusic.pause();if(win){goTo('winMessage');} else {goTo('lose');}}
+function floatButton(btn){const originalX = btn.offsetLeft;const originalY = btn.offsetTop;btn.addEventListener('mousemove', e => {const rect=btn.getBoundingClientRect();const dx=e.clientX-(rect.left+rect.width/2);const dy=e.clientY-(rect.top+rect.height/2);const dist=Math.sqrt(dx*dx+dy*dy);if(dist<80){const angle=Math.atan2(dy,dx);btn.style.transform=`translate(${Math.cos(angle)*80}px,${Math.sin(angle)*80}px)`;} else {btn.style.transform='translate(0,0)';}});btn.addEventListener('mouseleave', ()=>{btn.style.transform='translate(0,0)';});}
+floatButton(document.getElementById('closeBtn'));
+floatButton(document.getElementById('loseCloseBtn'));
+function startBackgroundHearts(){bgHeartInterval=setInterval(()=>{const heart=document.createElement('div');heart.className='bg-heart';heart.innerText='💗';heart.style.left=Math.random()*window.innerWidth+'px';heart.style.fontSize=(10+Math.random()*20)+'px';heart.style.setProperty('--drift',(Math.random()*200-100)+'px');heart.style.animationDuration=(5+Math.random()*5)+'s';bgContainer.appendChild(heart);setTimeout(()=>heart.remove(),10000);
+},300);}
+startBackgroundHearts();
+
+/* PASSWORD SCREEN LOGIC */
+const SECRET_PASSWORD = "Lihini"; 
+const passwordInput = document.getElementById('lovePassword');
+const passwordBtn = document.getElementById('passwordBtn');
+passwordBtn.addEventListener('click', ()=>{
+  const input = passwordInput.value.trim();
+  const msg = document.getElementById('passwordMsg');
+  if(input===SECRET_PASSWORD){
+    // Unlock audio context
+    bgMusic.play().then(()=>{ bgMusic.pause(); });
+    tapSound.play().then(()=>tapSound.pause());
+    goldSound.play().then(()=>goldSound.pause());
+    typingSound.play().then(()=>typingSound.pause());
+    // Go to intro
+    goTo('intro');
+  } else {
+    msg.innerText = "Oops! That’s not the secret… 💔 Try again!";
+    msg.style.animation = "shake 0.3s";
+    setTimeout(()=>msg.style.animation="",300);
+  }
+});
+
+// Floating hearts + typing sound while typing
+passwordInput.addEventListener('input', ()=>{
+  const heart = document.createElement('div');
+  heart.className = 'float-heart';
+  heart.innerText = '💖';
+  const rect = passwordInput.getBoundingClientRect();
+  heart.style.left = (rect.left + Math.random()*rect.width)+'px';
+  heart.style.top = (rect.top - 20)+'px';
+  document.body.appendChild(heart);
+  setTimeout(()=>heart.remove(),1000);
+  // Play typing sound
+  typingSound.currentTime=0;
+  typingSound.play();
+});
+</script>
+</body>
+</html>
